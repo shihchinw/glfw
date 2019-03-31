@@ -92,19 +92,21 @@ if ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" OR
         COMPILE_FLAGS -Wdeclaration-after-statement)
 endif()
 
-add_library(glfw ${glfw_SOURCES} ${glfw_HEADERS})
-set_target_properties(glfw PROPERTIES
+add_library(glfw_objects OBJECT ${glfw_SOURCES} ${glfw_HEADERS})
+add_library(glfw $<TARGET_OBJECTS:glfw_objects>)
+
+set_target_properties(glfw_objects PROPERTIES
                       OUTPUT_NAME ${GLFW_LIB_NAME}
                       VERSION ${GLFW_VERSION}
                       SOVERSION ${GLFW_VERSION_MAJOR}
                       POSITION_INDEPENDENT_CODE ON
                       FOLDER "GLFW3")
 
-target_compile_definitions(glfw PRIVATE _GLFW_USE_CONFIG_H)
-target_include_directories(glfw PUBLIC
+target_compile_definitions(glfw_objects PRIVATE _GLFW_USE_CONFIG_H)
+target_include_directories(glfw_objects PUBLIC
                            "$<BUILD_INTERFACE:${GLFW_SOURCE_DIR}/include>"
                            "$<INSTALL_INTERFACE:${CMAKE_INSTALL_FULL_INCLUDEDIR}>")
-target_include_directories(glfw PRIVATE
+target_include_directories(glfw_objects PRIVATE
                            "${GLFW_SOURCE_DIR}/src"
                            "${GLFW_BINARY_DIR}/src"
                            ${glfw_INCLUDE_DIRS})
@@ -113,11 +115,11 @@ target_include_directories(glfw PRIVATE
 # the inclusion of stddef.h (by glfw3.h), which is itself included before
 # win32_platform.h.  We define them here until a saner solution can be found
 # NOTE: MinGW-w64 and Visual C++ do /not/ need this hack.
-target_compile_definitions(glfw PRIVATE
+target_compile_definitions(glfw_objects PRIVATE
                            "$<$<BOOL:${MINGW}>:UNICODE;WINVER=0x0501>")
 
 # Enable a reasonable set of warnings (no, -Wextra is not reasonable)
-target_compile_options(glfw PRIVATE
+target_compile_options(glfw_objects PRIVATE
                        "$<$<C_COMPILER_ID:AppleClang>:-Wall>"
                        "$<$<C_COMPILER_ID:Clang>:-Wall>"
                        "$<$<C_COMPILER_ID:GNU>:-Wall>")
@@ -152,7 +154,7 @@ else()
 endif()
 
 if (MSVC)
-    target_compile_definitions(glfw PRIVATE _CRT_SECURE_NO_WARNINGS)
+    target_compile_definitions(glfw_objects PRIVATE _CRT_SECURE_NO_WARNINGS)
 endif()
 
 if (GLFW_INSTALL)
